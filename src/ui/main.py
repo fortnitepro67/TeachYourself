@@ -1,23 +1,22 @@
-"""MVP: live tuner window showing the detected note while playing."""
+"""App entry point: tabs for Tuner and Theory."""
 import sys
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QComboBox
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QComboBox, QTabWidget
 from PySide6.QtCore import Qt, Signal, QObject
 
 sys.path.append(".")
 from src.audio.input_stream import MicPitchListener, list_input_devices, default_input_device
 from src.audio.pitch_detection import nearest_target
 from src.content.guitar_notes import STANDARD_TUNING_FREQS
+from src.ui.theory_screen import TheoryScreen
 
 
 class NoteSignal(QObject):
     updated = Signal(object, object)  # freq, note
 
 
-class TunerWindow(QWidget):
+class TunerTab(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("TeachYourself - Tuner")
-        self.resize(420, 260)
 
         self.device_box = QComboBox()
         self.devices = list_input_devices()
@@ -78,15 +77,34 @@ class TunerWindow(QWidget):
             self.detail_label.setText(f"zu hoch (+{cents:.0f} Cent) - tiefer drehen")
             self.detail_label.setStyleSheet("font-size: 20px; color: orange;")
 
-    def closeEvent(self, event):
+    def stop(self):
         if self.listener:
             self.listener.stop()
+
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("TeachYourself")
+        self.resize(460, 340)
+
+        self.tuner_tab = TunerTab()
+        tabs = QTabWidget()
+        tabs.addTab(self.tuner_tab, "Tuner")
+        tabs.addTab(TheoryScreen(), "Theorie")
+
+        layout = QVBoxLayout()
+        layout.addWidget(tabs)
+        self.setLayout(layout)
+
+    def closeEvent(self, event):
+        self.tuner_tab.stop()
         super().closeEvent(event)
 
 
 def main():
     app = QApplication(sys.argv)
-    window = TunerWindow()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
 
