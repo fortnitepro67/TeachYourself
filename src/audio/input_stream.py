@@ -1,11 +1,9 @@
 """Microphone capture that reports the detected note via a callback."""
 import sounddevice as sd
-import numpy as np
 
 from .pitch_detection import detect_pitch, freq_to_note_name
 
-SAMPLE_RATE = 44100
-BLOCK_SIZE = 2048
+BLOCK_DURATION = 2048 / 44100  # ~46ms: enough full periods to detect guitar's lowest open string
 
 
 def _preferred_hostapi() -> int:
@@ -39,17 +37,24 @@ def default_input_device() -> int:
 class MicPitchListener:
     def __init__(self, on_note: callable, device: int | None = None):
         self.on_note = on_note
+        if device is None:
+            device = default_input_device()
+        # Devices don't all support the same sample rate (e.g. some mics
+        # only do 48000Hz, not the common 44100Hz), so use the device's own
+        # native rate instead of a hardcoded one.
+        self.sample_rate = int(sd.query_devices(device)["default_samplerate"])
+        block_size = int(self.sample_rate * BLOCK_DURATION)
         self._stream = sd.InputStream(
             device=device,
             channels=1,
-            samplerate=SAMPLE_RATE,
-            blocksize=BLOCK_SIZE,
+            samplerate=self.sample_rate,
+            blocksize=block_size,
             callback=self._callback,
         )
 
     def _callback(self, indata, frames, time_info, status):
         samples = indata[:, 0]
-        freq = detect_pitch(samples, SAMPLE_RATE)
+        freq = detect_pitch(samples, self.sample_rate)
         note = freq_to_note_name(freq) if freq else None
         self.on_note(freq, note)
 
