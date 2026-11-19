@@ -5,7 +5,8 @@ from PySide6.QtCore import Qt, Signal, QObject
 
 sys.path.append(".")
 from src.audio.input_stream import MicPitchListener, list_input_devices, default_input_device
-from src.audio.pitch_detection import nearest_note
+from src.audio.pitch_detection import nearest_target
+from src.content.guitar_notes import STANDARD_TUNING_FREQS
 
 
 class NoteSignal(QObject):
@@ -65,7 +66,7 @@ class TunerWindow(QWidget):
             self.detail_label.setText("")
             return
 
-        name, target_freq, cents = nearest_note(freq)
+        name, target_freq, cents = nearest_target(freq, STANDARD_TUNING_FREQS)
         self.label.setText(f"{name}  ({freq:.1f} Hz)")
         if abs(cents) < 5:
             self.detail_label.setText("Perfekt gestimmt")

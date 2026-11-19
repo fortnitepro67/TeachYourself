@@ -8,17 +8,32 @@ SAMPLE_RATE = 44100
 BLOCK_SIZE = 2048
 
 
+def _preferred_hostapi() -> int:
+    """Windows reports the same physical device once per audio driver
+    (MME, DirectSound, WASAPI, WDM-KS...), which duplicates every entry in
+    the device list. Pick one driver - WASAPI if available - to show each
+    device exactly once."""
+    hostapis = sd.query_hostapis()
+    for preferred in ("Windows WASAPI", "MME"):
+        for i, api in enumerate(hostapis):
+            if api["name"] == preferred:
+                return i
+    return 0
+
+
 def list_input_devices() -> list[tuple[int, str]]:
-    """Return (device_index, name) for every device with at least one input channel."""
+    """Return (device_index, name) for every input device on the preferred driver."""
+    hostapi = _preferred_hostapi()
     return [
         (i, d["name"])
         for i, d in enumerate(sd.query_devices())
-        if d["max_input_channels"] > 0
+        if d["max_input_channels"] > 0 and d["hostapi"] == hostapi
     ]
 
 
 def default_input_device() -> int:
-    return sd.default.device[0]
+    hostapi = _preferred_hostapi()
+    return sd.query_hostapis()[hostapi]["default_input_device"]
 
 
 class MicPitchListener:

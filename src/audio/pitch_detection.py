@@ -69,3 +69,12 @@ def nearest_note(freq: float) -> tuple[str, float, float]:
     semitones_from_a4 = round(12 * np.log2(freq / a4))
     target_freq = a4 * 2 ** (semitones_from_a4 / 12)
     return freq_to_note_name(freq), target_freq, cents_off(freq, target_freq)
+
+
+def nearest_target(freq: float, targets: dict[str, float]) -> tuple[str, float, float]:
+    """Nearest entry in a fixed target set (e.g. the 6 open guitar strings):
+    (name, target frequency, cents off). Restricting to known targets avoids
+    picking the wrong octave when the actual pitch is far out of tune."""
+    name = min(targets, key=lambda n: abs(cents_off(freq, targets[n])))
+    target_freq = targets[name]
+    return name, target_freq, cents_off(freq, target_freq)

@@ -2,7 +2,8 @@ import numpy as np
 import sys
 sys.path.append(".")
 
-from src.audio.pitch_detection import detect_pitch, freq_to_note_name
+from src.audio.pitch_detection import detect_pitch, freq_to_note_name, nearest_target
+from src.content.guitar_notes import STANDARD_TUNING_FREQS
 
 
 def _sine(freq, sample_rate=44100, duration=0.1):
@@ -38,6 +39,14 @@ def test_low_e_with_strong_overtone_not_octave_wrong():
     freq = detect_pitch(samples, 44100)
     assert freq is not None
     assert freq_to_note_name(freq) == "E2"
+
+
+def test_nearest_target_keeps_correct_string_when_badly_out_of_tune():
+    # A D string tuned way flat (130Hz vs 146.83Hz target) must still match
+    # D3, not snap across to a neighboring string/octave.
+    name, target_freq, cents = nearest_target(130.0, STANDARD_TUNING_FREQS)
+    assert name == "D3"
+    assert target_freq == 146.83
 
 
 def test_silence_returns_none():
