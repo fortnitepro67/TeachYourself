@@ -8,10 +8,24 @@ SAMPLE_RATE = 44100
 BLOCK_SIZE = 2048
 
 
+def list_input_devices() -> list[tuple[int, str]]:
+    """Return (device_index, name) for every device with at least one input channel."""
+    return [
+        (i, d["name"])
+        for i, d in enumerate(sd.query_devices())
+        if d["max_input_channels"] > 0
+    ]
+
+
+def default_input_device() -> int:
+    return sd.default.device[0]
+
+
 class MicPitchListener:
-    def __init__(self, on_note: callable):
+    def __init__(self, on_note: callable, device: int | None = None):
         self.on_note = on_note
         self._stream = sd.InputStream(
+            device=device,
             channels=1,
             samplerate=SAMPLE_RATE,
             blocksize=BLOCK_SIZE,
