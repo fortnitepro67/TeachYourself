@@ -21,3 +21,7 @@ STANDARD_TUNING_FREQS = {
     "B3": 246.94,
     "E4": 329.63,
 }
+
+# Same 6 open-string frequencies, but as a plain list ordered low E to high
+# e - matches the string order used by CHORD_SHAPES / STRING_NAMES.
+OPEN_STRING_FREQS = [82.41, 110.00, 146.83, 196.00, 246.94, 329.63]

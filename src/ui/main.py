@@ -8,6 +8,7 @@ from src.audio.input_stream import MicPitchListener, list_input_devices, default
 from src.audio.pitch_detection import nearest_target
 from src.content.guitar_notes import STANDARD_TUNING_FREQS
 from src.ui.theory_screen import TheoryScreen
+from src.ui.chord_practice_screen import ChordPracticeScreen
 
 
 class NoteSignal(QObject):
@@ -81,6 +82,9 @@ class TunerTab(QWidget):
         if self.listener:
             self.listener.stop()
 
+    def current_device(self):
+        return self.device_box.currentData()
+
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -92,6 +96,7 @@ class MainWindow(QWidget):
         tabs = QTabWidget()
         tabs.addTab(self.tuner_tab, "Tuner")
         tabs.addTab(TheoryScreen(), "Theorie")
+        tabs.addTab(ChordPracticeScreen(get_device=self.tuner_tab.current_device), "Akkord üben")
 
         layout = QVBoxLayout()
         layout.addWidget(tabs)

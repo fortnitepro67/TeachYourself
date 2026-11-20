@@ -1,5 +1,6 @@
 """Microphone capture that reports the detected note via a callback."""
 import sounddevice as sd
+import numpy as np
 
 from .pitch_detection import detect_pitch, freq_to_note_name
 
@@ -32,6 +33,17 @@ def list_input_devices() -> list[tuple[int, str]]:
 def default_input_device() -> int:
     hostapi = _preferred_hostapi()
     return sd.query_hostapis()[hostapi]["default_input_device"]
+
+
+def record_clip(duration_seconds: float, device: int | None = None) -> tuple[np.ndarray, int]:
+    """Blocking recording of a single mono clip. Call this off the UI thread
+    (e.g. in a QThread) so it doesn't freeze the GUI for `duration_seconds`."""
+    if device is None:
+        device = default_input_device()
+    sample_rate = int(sd.query_devices(device)["default_samplerate"])
+    recording = sd.rec(int(duration_seconds * sample_rate), samplerate=sample_rate, channels=1, device=device)
+    sd.wait()
+    return recording[:, 0], sample_rate
 
 
 class MicPitchListener:

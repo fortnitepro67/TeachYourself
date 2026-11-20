@@ -6,6 +6,8 @@ Each string entry is (fret, finger):
   when the string is open/muted.
 """
 
+from src.content.guitar_notes import OPEN_STRING_FREQS
+
 STRING_NAMES = ["E", "A", "D", "G", "B", "e"]
 
 CHORD_SHAPES = {
@@ -18,3 +20,12 @@ CHORD_SHAPES = {
     "C":  [(None, None), (3, 3), (2, 2), (0, None), (1, 1), (0, None)],
     "G":  [(3, 2), (2, 1), (0, None), (0, None), (0, None), (3, 3)],
 }
+
+
+def expected_frequencies(chord_name: str) -> list[float | None]:
+    """Target frequency per string for this chord (None for muted strings)."""
+    shape = CHORD_SHAPES[chord_name]
+    return [
+        None if fret is None else OPEN_STRING_FREQS[string] * 2 ** (fret / 12)
+        for string, (fret, _finger) in enumerate(shape)
+    ]
