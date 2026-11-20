@@ -8,7 +8,7 @@ frequency - simpler and robust as long as we know what chord is being tested.
 import numpy as np
 
 
-def analyze_chord(samples: np.ndarray, sample_rate: int, expected_freqs: list[float | None], tolerance_cents: float = 35.0, presence_fraction: float = 0.1) -> list[bool | None]:
+def analyze_chord(samples: np.ndarray, sample_rate: int, expected_freqs: list[float | None], tolerance_cents: float = 35.0, presence_fraction: float = 0.35) -> list[bool | None]:
     """Return, per string, True/False whether that string's expected pitch
     seems present, or None for a muted string (not checked).
 
@@ -18,6 +18,15 @@ def analyze_chord(samples: np.ndarray, sample_rate: int, expected_freqs: list[fl
     real string's energy is still a million times the median, but so is mere
     windowing leakage from the OTHER strings into an unplayed string's bin -
     comparing against the loudest string actually playing separates the two.
+
+    shortcut: a fretted note that happens to sit near-exactly on another
+    playing string's harmonic (e.g. fretting the D string at the 2nd fret
+    gives E3, almost exactly the open low E string's 2nd harmonic) can still
+    read as present even when misfretted/not played - real harmonic energy
+    from the other string lands right on the target bin. presence_fraction
+    0.35 rejects most incidental harmonic bleed while still accepting quieter
+    real strings, but doesn't fully solve it; a real fix needs per-string
+    harmonic-series/inharmonicity analysis, not just single-bin energy.
     """
     samples = samples.astype(np.float64)
     samples = samples - samples.mean()
